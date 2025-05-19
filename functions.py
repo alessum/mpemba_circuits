@@ -12,6 +12,15 @@ from tqdm import tqdm
 from scipy.linalg import fractional_matrix_power as fmp
 from math import comb
 
+from scipy.linalg import eigh
+import warnings
+from itertools import combinations
+from sympy.physics.quantum.cg import CG
+from sympy import S
+from sympy import sympify
+from scipy.linalg import expm
+from functools import reduce
+
 
 from numba import njit, prange#, config,
 
@@ -1006,10 +1015,6 @@ np.trace(A), np.trace(B), np.trace(C)
 
 
 ##### Relative entropy
-
-import numpy as np
-from scipy.linalg import eigh, fractional_matrix_power, logm
-import warnings
 warnings.simplefilter("ignore", category=UserWarning)
 
 def _safe_logm(mat: np.ndarray, epsilon: float) -> np.ndarray:
@@ -1294,8 +1299,6 @@ for name, (rho, sigma) in test_pairs.items():
 '''
 
 # U1 ############
-import numpy as np
-from itertools import combinations
 
 def spin_basis_1d(N, m=0.0, dtype=np.uint32, tol=1e-8):
     """
@@ -1942,9 +1945,6 @@ def manual_N6_SU2_tw(rho):
 
 
 ##### N = 8
-from sympy.physics.quantum.cg import CG
-from sympy import S
-from sympy import sympify
 
 def cg_table_generator(j1, j2):
     """
@@ -2349,51 +2349,47 @@ def manual_N8_SU2_tw(rho):
     return U_CG_8 @ Manual_tw @ U_CG_8.T.conjugate()
 
 # U_CG_12 = np.load("mask_memory/U_CG_12.npy")
-def manual_N12_SU2_tw(rho):
-    rho_CG = U_CG_12.conj().T @ rho @ U_CG_12
-    a0 = 132*1
-    a1 = a0+297*3
-    a2 = a1+275*5
-    a3 = a2+154*7
-    a4 = a3+54*9
-    a5 = a4+11*11
+# def manual_N12_SU2_tw(rho):
+#     rho_CG = U_CG_12.conj().T @ rho @ U_CG_12
+#     a0 = 132*1
+#     a1 = a0+297*3
+#     a2 = a1+275*5
+#     a3 = a2+154*7
+#     a4 = a3+54*9
+#     a5 = a4+11*11
     
-    B_0 = rho_CG[:a0,:a0] # block with J = 0
-    B_1 = rho_CG[a0:a1,a0:a1] # block with J = 1
-    B_2 = rho_CG[a1:a2,a1:a2] # block with J = 2
-    B_3 = rho_CG[a2:a3,a2:a3] # block with J = 3
-    B_4 = rho_CG[a3:a4,a3:a4] # block with J = 4
-    B_5 = rho_CG[a4:a5,a4:a5] # block with J = 5
-    B_6 = rho_CG[a5:,a5:] # block with J = 6
+#     B_0 = rho_CG[:a0,:a0] # block with J = 0
+#     B_1 = rho_CG[a0:a1,a0:a1] # block with J = 1
+#     B_2 = rho_CG[a1:a2,a1:a2] # block with J = 2
+#     B_3 = rho_CG[a2:a3,a2:a3] # block with J = 3
+#     B_4 = rho_CG[a3:a4,a3:a4] # block with J = 4
+#     B_5 = rho_CG[a4:a5,a4:a5] # block with J = 5
+#     B_6 = rho_CG[a5:,a5:] # block with J = 6
         
-    Manual_tw = np.zeros_like(rho, dtype=np.complex128)
-    J = 0
-    Manual_tw[:a0,:a0] = B_0
-    J = 1
-    temp = np.einsum('ikjk->ij', B_1.reshape(297,3,297,3)) # trace on the 3 magn degeneracies
-    Manual_tw[a0:a1,a0:a1] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
-    J = 2
-    temp = np.einsum('ikjk->ij', B_2.reshape(275,5,275,5))
-    Manual_tw[a1:a2,a1:a2] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
-    J = 3
-    temp = np.einsum('ikjk->ij', B_3.reshape(154,7,154,7))
-    Manual_tw[a2:a3,a2:a3] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
-    J = 4
-    temp = np.einsum('ikjk->ij', B_4.reshape(54,9,54,9))
-    Manual_tw[a3:a4,a3:a4] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
-    J = 5
-    temp = np.einsum('ikjk->ij', B_5.reshape(11,11,11,11))
-    Manual_tw[a4:a5,a4:a5] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
-    J = 6
-    Manual_tw[a5:,a5:] = np.trace(B_6) * np.eye(2*J+1, dtype=np.complex128)/(2*J+1)
+#     Manual_tw = np.zeros_like(rho, dtype=np.complex128)
+#     J = 0
+#     Manual_tw[:a0,:a0] = B_0
+#     J = 1
+#     temp = np.einsum('ikjk->ij', B_1.reshape(297,3,297,3)) # trace on the 3 magn degeneracies
+#     Manual_tw[a0:a1,a0:a1] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
+#     J = 2
+#     temp = np.einsum('ikjk->ij', B_2.reshape(275,5,275,5))
+#     Manual_tw[a1:a2,a1:a2] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
+#     J = 3
+#     temp = np.einsum('ikjk->ij', B_3.reshape(154,7,154,7))
+#     Manual_tw[a2:a3,a2:a3] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
+#     J = 4
+#     temp = np.einsum('ikjk->ij', B_4.reshape(54,9,54,9))
+#     Manual_tw[a3:a4,a3:a4] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
+#     J = 5
+#     temp = np.einsum('ikjk->ij', B_5.reshape(11,11,11,11))
+#     Manual_tw[a4:a5,a4:a5] = np.kron(temp, np.eye(2*J+1, dtype=np.complex128))/(2*J+1)
+#     J = 6
+#     Manual_tw[a5:,a5:] = np.trace(B_6) * np.eye(2*J+1, dtype=np.complex128)/(2*J+1)
     
-    # fn.print_matrix(Manual_tw)
-    return U_CG_12 @ Manual_tw @ U_CG_12.T.conjugate()
+#     # fn.print_matrix(Manual_tw)
+#     return U_CG_12 @ Manual_tw @ U_CG_12.T.conjugate()
 
-
-from scipy.integrate import quad_vec
-from scipy.linalg import expm
-from functools import reduce
 id_ = np.eye(2)
 sx = np.array([[0.,1.+0j],[1.+0j,0.]])
 sy = np.array([[0.,-1j],[1j,0.]])
