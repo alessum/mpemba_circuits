@@ -4,6 +4,7 @@ from tqdm import tqdm
 from circuit_obj import Circuit
 from itertools import product
 from scipy.special import comb
+import argparse
 
 ##############################################################################################
 
@@ -11,7 +12,11 @@ N = 20
 
 # Circuit parameters
 T = 10
-circuit_to_run = 39
+parser = argparse.ArgumentParser(description="Run circuit simulations.")
+parser.add_argument("--circuit_to_run", type=int, required=True, help="Circuit realization to run")
+args = parser.parse_args()
+
+circuit_to_run = args.circuit_to_run
 circuit_realizations = 100
 symmetry = ['U1', 'SU2', 'Z2', 'ZK'][0]
 geometry = ['random', 'brickwork'][1]

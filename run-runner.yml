@@ -1,0 +1,46 @@
+name: Run & Commit runnerU1_pure.py
+
+on:
+  workflow_dispatch:
+    inputs:
+      circuit_to_run:
+        description: 'Circuit index (integer)'
+        required: true
+        type: number
+
+permissions:
+  contents: write   # grant write access to GITHUB_TOKEN
+
+jobs:
+  simulate-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true   # ensures GITHUB_TOKEN is available for push
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run runnerU1_pure.py
+        run: python runnerU1_pure.py --circuit_to_run ${{ github.event.inputs.circuit_to_run }}
+
+      # Option A: Use git-auto-commit-action
+      - name: Auto‑commit changed files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Auto‑commit from GitHub Actions' :contentReference[oaicite:0]{index=0}
+
+      # Option B: Use EndBug/add-and-commit
+      # - name: Commit and push changes
+      #   uses: EndBug/add-and-commit@v9
+      #   with:
+      #     add: '.'                   # stage all changes
+      #     message: 'Auto‑commit from GitHub Actions' :contentReference[oaicite:1]{index=1}
