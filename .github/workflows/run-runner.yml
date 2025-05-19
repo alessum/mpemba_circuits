@@ -7,6 +7,11 @@ on:
         description: 'Circuit index (integer)'
         required: true
         type: number
+      number_of_circuits:
+        description: 'How many circuits to run'
+        required: false
+        default: 10
+        type: number
 
 permissions:
   contents: write   # grant write access to GITHUB_TOKEN
@@ -55,11 +60,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run runnerU1_pure.py for next 10 circuits
+      - name: Run runnerU1_pure.py for tot circuits
         run: |
           start=${{ github.event.inputs.circuit_to_run }}
-          end=$(( start + 10 ))
+          count=${{ github.event.inputs.number_of_circuits }}
+          end=$(( start + count - 1 ))
+          echo "Running circuits from $start to $end"
           for i in $(seq $start $end); do
+            echo "→ Running circuit $i"
             python runnerU1_pure.py --circuit_to_run $i
           done
 
