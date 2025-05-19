@@ -11,7 +11,7 @@ import argparse
 N = 20
 
 # Circuit parameters
-T = 10
+T = 10000
 parser = argparse.ArgumentParser(description="Run circuit simulations.")
 parser.add_argument("--circuit_to_run", type=float, required=True, help="Circuit realization to run")
 args = parser.parse_args()
