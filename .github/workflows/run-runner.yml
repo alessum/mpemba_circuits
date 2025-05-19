@@ -25,7 +25,10 @@ jobs:
           sparse-checkout-cone-mode: false
           # Include just the 'data' folder, but exclude U1_theta* files
           sparse-checkout: |
-            data
+            # include all files and folders in the repo
+            *
+
+            # exclude U1_theta* files            
             !data/U1_theta*
 
       - name: Set up Python
