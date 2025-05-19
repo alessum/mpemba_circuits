@@ -40,7 +40,7 @@ sectors_e = np.array([int(comb(Ne, int(Ne/2+m))) for m in np.arange(-Ne/2, Ne/2+
 masks_dict = fn.load_mask_memory(N, (2 if symmetry!='ZK' else K))
 
 alphas = np.array([1]) # np.r_[np.linspace(0.1, 2, 10)]
-thetas = np.array([.3, .4, .5])*np.pi # theta
+thetas = np.array([.3, .35, .4, .45, .5])*np.pi # theta
 
 ##############################################################################################
 
@@ -62,7 +62,6 @@ elif symmetry == 'SU2':
         np.save(f'data/SU2_rnd_parameters.npy', h_list_all)
         
 snapshots_t = np.array([t for t in [0, 1, 2, 10, 100, 1000, 9999] if t <= T])
-
 
 for circuit_realization in range(circuit_realizations):
     if symmetry == 'U1':
