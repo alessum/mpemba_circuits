@@ -10,6 +10,7 @@ import pickle
 from scipy.stats import unitary_group
 from tqdm import tqdm
 from scipy.linalg import fractional_matrix_power as fmp
+from math import comb
 
 
 from numba import njit, prange#, config,
@@ -435,20 +436,20 @@ def vNE(rho):
     return -np.sum(eigvals*np.log2(eigvals))
 
 
-def gen_Ls(N_A, circuit_type):
+def gen_Ls(Ns, circuit_type):
     if circuit_type == 'u1':
-        L = np.zeros((2**N_A, 2**N_A), dtype=complex)
-        for n in range(N_A):
-            paulis = [I]*N_A
+        L = np.zeros((2**Ns, 2**Ns), dtype=complex)
+        for n in range(Ns):
+            paulis = [I]*Ns
             paulis[n] = Z
             L += reduce(np.kron, paulis)
         return [L]
     elif circuit_type == 'su2':
         Ls = []
         for PAULI in [X, Y, Z]:
-            for n in range(N_A):
-                L = np.zeros((2**N_A, 2**N_A), dtype=complex)
-                paulis = [I]*N_A
+            for n in range(Ns):
+                L = np.zeros((2**Ns, 2**Ns), dtype=complex)
+                paulis = [I]*Ns
                 paulis[n] = PAULI
                 L += reduce(np.kron, paulis)
             Ls.append(L)
@@ -486,7 +487,7 @@ def load_mask_memory(N, K=2):
         mask_dict[n] = get_masks_typed(N, n, K)
     return mask_dict
 
-def gen_Q(N, N_A=None):
+def gen_Q(N, Ns=None):
     '''
     Generate the Q matrix composed by the projectors on the sectors of different
     magnetization values
@@ -496,13 +497,13 @@ def gen_Q(N, N_A=None):
     #     mask_dict = DB['mask_dict']
     #     states_per_sector = DB['states_per_sector']
     #     qs = DB['qs']
-    #     if N_A is None:
+    #     if Ns is None:
     #         return mask_dict
     #     Q = DB['Q']
     #     return mask_dict, qs, states_per_sector, Q
     
-    if N_A is None:
-        print('N_A must be specified if the mask memory is not available yet')
+    if Ns is None:
+        print('Ns must be specified if the mask memory is not available yet')
         mask_dict = {}
         for n in range(N):
             mask_dict[n] = get_masks(N, n)
@@ -512,16 +513,16 @@ def gen_Q(N, N_A=None):
     for n in range(N):
         mask_dict[n] = get_masks(N, n)
         
-    computational_basis = np.arange(2**N_A)
+    computational_basis = np.arange(2**Ns)
     basis = np.array([bin(i).count('1') for i in computational_basis], dtype=int)
 
     states_per_sector = {}
-    Q = np.zeros((2**N_A, 2**N_A), dtype=complex)    
+    Q = np.zeros((2**Ns, 2**Ns), dtype=complex)    
     qs = []
-    for M_A in range(N_A+1):
+    for M_A in range(Ns+1):
         temp_comp_states = computational_basis[basis == M_A]
         states_per_sector[M_A] = temp_comp_states
-        vector = np.zeros(2**N_A)
+        vector = np.zeros(2**Ns)
         vector[temp_comp_states] = 1
         qs.append(np.outer(vector, np.conj(vector)))
 
@@ -954,51 +955,6 @@ def compute_projector(Ns, states):
     # The Frobenius norm of this matrix is n, so normalize by n
     return P / n
 
-
-
-# blocks:
-
-def get_block_sizes(N_A):
-    """Compute the sizes of the diagonal blocks using binomial coefficients."""
-    from quspin.basis import spin_basis_1d
-    m_values = np.linspace(-.5, .5, N_A+1)  # Adjust range as needed
-    return [int(spin_basis_1d(N_A, m=m).Ns) for m in m_values]
-
-def split_block_diagonal(matrix, N_A):
-    """Split a block-diagonal matrix into its individual blocks."""
-    block_sizes = get_block_sizes(N_A)
-    indices = np.cumsum([0] + block_sizes)  # Compute slicing indices
-
-    blocks = []
-    for i in range(len(block_sizes)):
-        start, end = indices[i], indices[i+1]
-        blocks.append(matrix[start:end, start:end])
-
-    return blocks
-
-def merge_block_diagonal(blocks):
-    """Merge individual blocks into a single block-diagonal matrix."""
-    total_size = sum(block.shape[0] for block in blocks)
-    merged_matrix = np.zeros((total_size, total_size), dtype=np.complex128)
-
-    start = 0
-    for block in blocks:
-        size = block.shape[0]
-        merged_matrix[start:start+size, start:start+size] = block
-        start += size
-
-    return merged_matrix
-
-def operation_per_block(rho, function, N_A):
-    '''
-    Compute function on each block of rho individually
-    '''
-    blocks = split_block_diagonal(rho, N_A)
-    for idx, block in enumerate(blocks):
-        # fn.print_matrix(block, 4)
-        blocks[idx] = function(block)
-    return merge_block_diagonal(blocks)
-
 def manual_U1_tw(rho, projectors):
     '''
     Apply the twirling operation to the density matrix rho.
@@ -1035,7 +991,7 @@ def vNentropy(x): return - x @ logm(x)
 def idfunction(x): return x 
 
 A = - basis_reordering.T @ pstateQ @ logm(pstateQ) @ basis_reordering
-B = fn.operation_per_block(reordered_pstate, vNentropy, N_A)
+B = fn.operation_per_block(reordered_pstate, vNentropy, Ns)
 C = fn.twirling(- basis_reordering.T @ pstate @ logm(pstateQ) @ basis_reordering, reordered_projectors)
 C = (- basis_reordering.T @ pstate @ logm(pstateQ) @ basis_reordering)
 C = (- pstate @ logm(pstateQ))
@@ -1338,46 +1294,111 @@ for name, (rho, sigma) in test_pairs.items():
 '''
 
 # U1 ############
-from quspin.basis import spin_basis_1d
+import numpy as np
+from itertools import combinations
+
+def spin_basis_1d(N, m=0.0, dtype=np.uint32, tol=1e-8):
+    """
+    NumPy‐only re‑implementation of quspin.basis.spin_basis_1d
+    valid for any N (even or odd) and allowing half‑integer total M.
+
+    Parameters
+    ----------
+    N : int
+        Number of spin‑1/2 sites.
+    m : float
+        Magnetization per site; 2*m*N must be (nearly) integer.
+    dtype : np.dtype
+        Output integer dtype for the bit‑strings.
+    tol : float
+        Tolerance for floating‑point checks.
+
+    Returns
+    -------
+    Ns : int
+        Number of basis states = binomial(N, n_up).
+    states : ndarray[int]
+        Unsigned ints (dtype) whose binary representation encodes the spin configuration,
+        sorted descending exactly as QuSpin.spin_basis_1d does.
+        
+    TEST:
+        Ns = np.arange(4, 21)
+        for N in Ns:
+            tot_states = 0
+            ms = np.linspace(-N/2, N/2, N+1)/N
+            for m in ms:
+                numb_states = len(fn.spin_basis_1d(N, m=m))
+                tot_states += numb_states
+            assert tot_states == 2**N, f'numb states found for {N}: {tot_states} instead of {2**N}'
+    """
+
+    # 1) total 2M = 2*m*N must be integer
+    twoM_float = 2 * m * N
+    if abs(twoM_float - round(twoM_float)) > tol:
+        raise ValueError(f"2*m*N = {twoM_float} not (nearly) integer")
+    twoM = int(round(twoM_float))
+
+    # 2) number of up‑spins: n_up = (2M + N) / 2
+    if (twoM + N) % 2 != 0:
+        # Should never happen if twoM is int and N is int, but just in case
+        raise ValueError(
+            f"(2*m*N + N)/2 = {(twoM+N)/2} not integer"
+        )
+    n_up = (twoM + N)//2
+    if not (0 <= n_up <= N):
+        raise ValueError(f"n_up = {n_up} out of range [0, {N}]")
+
+    # 3) enumerate all combinations of n_up ones in N bits,
+    #    in descending‐bit lex order to match QuSpin exactly.
+    states_list = []
+    # iterate over positions N-1, N-2, …, 0
+    for comb_ in combinations(range(N-1, -1, -1), n_up):
+        s = 0
+        for i in comb_:
+            s |= (1 << i)
+        states_list.append(s)
+        
+    states = np.array(states_list, dtype=dtype)
+    assert len(states) == comb(N, int(N/2 + m * N)), \
+        f'Wrong basis for {N}, {m}: {len(states)} != {comb(N, int(N/2 + m * N))}'
+
+    return states
+
+
 # Create a dictionary to hold projectors for each magnetization subsector.
 # Here we assume the magnetization m runs from -NA/2 to NA/2 in steps of 1.
 
-def build_projectors(N_A):
+def build_projectors(Ns):
     projectors = {}
-    U_U1 = np.zeros((2**N_A, 2**N_A), dtype=np.complex128)
+    U_U1 = np.zeros((2**Ns, 2**Ns), dtype=np.complex128)
     row_index = 0
     old_basis = None
-    for m in np.linspace(-.5, .5, N_A+1):
+    for m in np.linspace(-Ns/2, Ns/2, Ns+1)/Ns:
         # Retrieve the list of computational basis states for this magnetization sector.
         # (Assuming spin_basis_1d(NA, m=m) returns an object with a member .states.)
         if old_basis is not None:
             it = 0
-            while old_basis.Ns == spin_basis_1d(N_A, m=m).Ns:
+            while len(old_basis) == len(spin_basis_1d(Ns, m=m)):
                 m += 1e-7
                 it += 1
                 if it > 1000:
                     print("Warning: too many iterations")
                     break
         
-        basis_obj = spin_basis_1d(N_A, m=m)
+        basis_obj = spin_basis_1d(Ns, m=m)
         old_basis = basis_obj
                 
-        states_m = basis_obj.states
+        states_m = basis_obj
         # print(f"Magnetization m {m:.2f} has", len(states_m), "states: states_m =", states_m)
         for state in states_m[::-1]:
             U_U1[state, row_index] = 1
             row_index += 1
         # Compute the projector onto the subspace spanned by these states.
-        projectors[m] = compute_projector(N_A, states_m)
+        projectors[m] = compute_projector(Ns, states_m)
+        
+
         
     return projectors, U_U1
-
-
-# projectors2, U_U1_2 = build_projectors(2)
-# projectors3, U_U1_3 = build_projectors(3)
-# projectors4, U_U1_4 = build_projectors(4)
-# projectors6, U_U1_6 = build_projectors(6)
-# projectors8, U_U1_8 = build_projectors(8)
 
 # reordered projectors:
 
@@ -2561,10 +2582,9 @@ def sector_sizes(Ns, K):
     - List[int]: A list of length K where the q-th entry is the dimension of the subsector
                  with total charge q (mod K).
     """
-    import math
     sizes = [0] * K
     for s in range(Ns + 1):
-        count = math.comb(Ns, s)
+        count = comb(Ns, s)
         sizes[s % K] += count
     return np.array(sizes)
 
