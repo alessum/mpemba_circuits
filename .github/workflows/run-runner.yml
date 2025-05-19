@@ -67,4 +67,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'Auto‑commit new simulation results'
-          add: 'data/output*'
+          file_pattern: 'data/output*'
