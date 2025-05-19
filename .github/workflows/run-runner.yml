@@ -16,10 +16,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout code (sparse)
+        uses: actions/checkout@v4
         with:
-          persist-credentials: true   # ensures GITHUB_TOKEN is available for push
+          # Fetch full history if you need it (optional)
+          fetch-depth: 0
+          # Disable cone mode to allow exclusion patterns
+          sparse-checkout-cone-mode: false
+          # Include just the 'data' folder, but exclude U1_theta* files
+          sparse-checkout: |
+            data
+            !data/U1_theta*
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,18 +36,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run runnerU1_pure.py
-        run: python runnerU1_pure.py --circuit_to_run ${{ github.event.inputs.circuit_to_run }}
+      - name: Run runnerU1_pure.py for next 10 circuits
+        run: |
+          start=${{ github.event.inputs.circuit_to_run }}
+          end=$(( start + 10 ))
+          echo "Running circuits from $start to $end"
+          for i in $(seq $start $end); do
+            echo "→ circuit $i"
+            python runnerU1_pure.py --circuit_to_run $i
+          done
 
-      # Option A: Use git-auto-commit-action
-      - name: Auto‑commit changed files
+      - name: Auto-commit changed files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'Auto‑commit from GitHub Actions'
-
-      # Option B: Use EndBug/add-and-commit
-      # - name: Commit and push changes
-      #   uses: EndBug/add-and-commit@v9
-      #   with:
-      #     add: '.'                   # stage all changes
-      #     message: 'Auto‑commit from GitHub Actions' :contentReference[oaicite:1]{index=1}
+          commit_message: 'Auto-commit from GitHub Actions'

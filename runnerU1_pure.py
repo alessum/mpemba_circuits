@@ -13,10 +13,10 @@ N = 20
 # Circuit parameters
 T = 10
 parser = argparse.ArgumentParser(description="Run circuit simulations.")
-parser.add_argument("--circuit_to_run", type=int, required=True, help="Circuit realization to run")
+parser.add_argument("--circuit_to_run", type=float, required=True, help="Circuit realization to run")
 args = parser.parse_args()
 
-circuit_to_run = args.circuit_to_run
+circuit_to_run = (args.circuit_to_run).astype(int)
 circuit_realizations = 100
 symmetry = ['U1', 'SU2', 'Z2', 'ZK'][0]
 geometry = ['random', 'brickwork'][1]
