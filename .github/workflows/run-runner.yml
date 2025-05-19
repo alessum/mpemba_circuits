@@ -21,10 +21,10 @@ jobs:
           fetch-depth: 0
 
       - name: Upload U1_theta files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: theta-data
-          path: data/U1_theta*    # glob all your big theta .npz files
+          path: data/U1_theta*
 
 
   simulate-and-commit:
@@ -32,24 +32,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Sparse‑checkout all your code and small files—never the big thetas
       - name: Checkout code (sparse)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           sparse-checkout-cone-mode: false
           sparse-checkout: |
-            *                 # include everything…
-            !data/U1_theta*   # …except data/U1_theta* files
+            *
+            !data/U1_theta*
 
-      # 2) Pull down the big theta files into data/ on‑demand
       - name: Download theta-data artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: theta-data
-          path: data/       # now data/U1_theta*.npz reappear in your workspace
+          path: data/
 
-      # 3) Your normal setup + run loop
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -66,9 +63,8 @@ jobs:
             python runnerU1_pure.py --circuit_to_run $i
           done
 
-      # 4) Commit ONLY your newly generated files (never the original thetas)
       - name: Auto‑commit changed files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'Auto‑commit new simulation results'
-          add: 'data/output*'    # or whatever your runner generates
+          add: 'data/output*'
