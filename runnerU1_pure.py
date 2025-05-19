@@ -61,7 +61,7 @@ elif symmetry == 'SU2':
         h_list_all = np.random.uniform(-np.pi, np.pi, 1*N*circuit_realizations_max).reshape(circuit_realizations_max, N, 1) /alphaT
         np.save(f'data/SU2_rnd_parameters.npy', h_list_all)
         
-snapshots_t = np.array([t for t in [0, 1, 2, 3, 4, 10, 50, 100, 300, 500, 1000] if t <= T])
+snapshots_t = np.array([t for t in [0, 1, 2, 10, 100, 1000, 9999] if t <= T])
 
 
 for circuit_realization in range(circuit_realizations):
