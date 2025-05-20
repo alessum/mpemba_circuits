@@ -18,33 +18,21 @@ on:
 
 permissions:
   contents: write
-
 jobs:
   simulate-and-commit:
     runs-on: ubuntu-latest
     steps:
-
-      - name: Format theta_over_pi
+      # 1) Format theta and export it
+      - name: Compute theta/pi
         id: fmt
         run: |
-          python - << 'EOF'
-          import math, os
-          theta = float(os.environ['INPUT_THETA_TO_RUN'])
-          print(f"theta_str={theta/math.pi:.2f}")
-          EOF
+          theta=${{ github.event.inputs.theta_to_run }}
+          theta_str=$(python -c "import math; print(f'{float($theta)/math.pi:.2f}')")
+          echo "theta_str=$theta_str" >> $GITHUB_OUTPUT
         shell: bash
 
-      # ← export this output so that checkout can see it
-      - name: Export formatted theta
-        run: echo "theta_str=${{ steps.fmt.outputs.theta_str }}" >> $GITHUB_OUTPUT
-
-      - name: Ensure results folders exist
-        run: |
-          mkdir -p results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
-          mkdir -p results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
-          mkdir -p results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}      
-
-      - name: Checkout code (sparse)
+      # 2) Sparse‑checkout so we only pull back your target results paths
+      - name: Checkout (sparse)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -56,12 +44,18 @@ jobs:
             /results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
             /results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
 
+      # 3) Ensure those folders exist before your script writes into them
+      - name: Ensure results folders exist
+        run: |
+          mkdir -p results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+
+      # 4) Run your simulations
       - name: Run simulations
         run: |
-          start=${{ github.event.inputs.circuit_to_run }}
-          count=${{ github.event.inputs.number_of_circuits }}
-          end=$(( start + count - 1 ))
-          for i in $(seq $start $end); do
+          for i in $(seq ${{ github.event.inputs.circuit_to_run }} \
+                      $(( github.event.inputs.circuit_to_run + github.event.inputs.number_of_circuits - 1 ))); do
             python runnerU1_pure.py \
               --circuit_to_run $i \
               --theta_to_run ${{ github.event.inputs.theta_to_run }}
