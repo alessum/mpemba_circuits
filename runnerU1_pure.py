@@ -15,14 +15,11 @@ N = 20
 parser = argparse.ArgumentParser(description="Run circuit simulations.")
 parser.add_argument("--circuit_to_run", type=float, required=True, help="Circuit realization to run")
 parser.add_argument("--theta_to_run", type=float, required=True, help="Theta (* pi) parameter to run")
-parser.add_argument("--time", type=float, required=False, help="Time parameter to run")
+parser.add_argument("--time_to_run", type=float, required=True, help="Time parameter to run")
 args = parser.parse_args()
 
 circuit_to_run = int(args.circuit_to_run)
-if args.time is not None:
-    T = int(args.time)
-else:
-    T = 1000
+T = int(args.time_to_run)
 circuit_realizations = 100
 symmetry = ['U1', 'SU2', 'Z2', 'ZK'][0]
 geometry = ['random', 'brickwork'][1]
