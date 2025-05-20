@@ -54,11 +54,13 @@ jobs:
       # 4) Run your simulations
       - name: Run simulations
         run: |
-          for i in $(seq ${{ github.event.inputs.circuit_to_run }} \
-                      $(( github.event.inputs.circuit_to_run + github.event.inputs.number_of_circuits - 1 ))); do
-            python runnerU1_pure.py \
-              --circuit_to_run $i \
-              --theta_to_run ${{ github.event.inputs.theta_to_run }}
+          start=${{ github.event.inputs.circuit_to_run }}
+          count=${{ github.event.inputs.number_of_circuits }}
+          end=$(( start + count - 1 ))
+          echo "Running circuits from $start to $end"
+          for i in $(seq $start $end); do
+            echo "→ Running circuit $i"
+            python runnerU1_pure.py --circuit_to_run $i --theta_to_run ${{ github.event.inputs.theta_to_run }}
           done
 
       - name: Upload results for this circuit
