@@ -13,7 +13,7 @@ on:
         default: 10
         type: number
       theta_to_run:
-        description: 'Theta to run (integer)'
+        description: 'Theta to run (float)'
         required: false
         default: 0
         type: number
