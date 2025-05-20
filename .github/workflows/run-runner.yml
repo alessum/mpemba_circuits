@@ -15,6 +15,10 @@ on:
         description: Theta to run (float)
         default: 0
         type: number
+      time_to_run:
+        description: Time to run (integer)
+        default: 1000
+        type: number
 
 permissions:
   contents: write
@@ -54,16 +58,16 @@ jobs:
           sparse-checkout: |
             /*
             !/results/**
-            /results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
-            /results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
-            /results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+            /results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
+            /results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
+            /results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
 
       # 3) Ensure those folders exist before your script writes into them
       - name: Ensure results folders exist
         run: |
-          mkdir -p results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
-          mkdir -p results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
-          mkdir -p results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
 
       # 4) Run your simulations
       - name: Run simulations
@@ -74,7 +78,7 @@ jobs:
           echo "Running circuits from $start to $end"
           for i in $(seq $start $end); do
             echo "→ Running circuit $i"
-            python runnerU1_pure.py --circuit_to_run $i --theta_to_run ${{ github.event.inputs.theta_to_run }}
+            python runnerU1_pure.py --circuit_to_run $i --theta_to_run ${{ github.event.inputs.theta_to_run }} --time_to_run ${{ github.event.inputs.time_to_run }} 
           done
 
       - name: Upload results for this circuit
@@ -82,8 +86,8 @@ jobs:
         with:
           name: U1-results
           path: |
-            results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+            results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
 
-            results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+            results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
 
-            results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+            results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}

@@ -12,13 +12,17 @@ import os  # Add this import at the top of the file
 N = 20
 
 # Circuit parameters
-T = 10
 parser = argparse.ArgumentParser(description="Run circuit simulations.")
 parser.add_argument("--circuit_to_run", type=float, required=True, help="Circuit realization to run")
 parser.add_argument("--theta_to_run", type=float, required=True, help="Theta (* pi) parameter to run")
+parser.add_argument("--time", type=float, required=False, help="Time parameter to run")
 args = parser.parse_args()
 
 circuit_to_run = int(args.circuit_to_run)
+if args.time is not None:
+    T = int(args.time)
+else:
+    T = 1000
 circuit_realizations = 100
 symmetry = ['U1', 'SU2', 'Z2', 'ZK'][0]
 geometry = ['random', 'brickwork'][1]
