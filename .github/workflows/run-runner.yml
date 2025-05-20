@@ -22,6 +22,14 @@ jobs:
   simulate-and-commit:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
       # 1) Format theta and export it
       - name: Compute theta/pi
         id: fmt
