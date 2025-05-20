@@ -1,7 +1,7 @@
 import numpy as np
 import functions as fn
 from scipy.special import comb
-
+from tqdm import tqdm
 
 class Circuit:
     def __init__(self, N, T, gates, order=None, symmetry=None, K=None):
@@ -74,7 +74,7 @@ class Circuit:
         t_snap = 0
         snapshots[t_snap, :] = state
         
-        for t in (range(1,self.T+1)):
+        for t in tqdm(range(1,self.T+1)):
             
             state = fn.apply_U(state, self.gates, self.order, masks_dict, (None if self.symmetry!='ZK' else self.K))            
             rho_s = fn.ptrace(state.copy(), sites_to_keep)

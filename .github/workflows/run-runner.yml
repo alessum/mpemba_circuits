@@ -12,6 +12,11 @@ on:
         required: false
         default: 10
         type: number
+      theta_to_run:
+        description: 'Theta to run (integer)'
+        required: false
+        default: 0
+        type: number
 
 permissions:
   contents: write   # grant write access to GITHUB_TOKEN
@@ -68,11 +73,11 @@ jobs:
           echo "Running circuits from $start to $end"
           for i in $(seq $start $end); do
             echo "→ Running circuit $i"
-            python runnerU1_pure.py --circuit_to_run $i
+            python runnerU1_pure.py --circuit_to_run $i --theta_to_run ${{ github.event.inputs.theta_to_run }}
           done
 
-      - name: Auto‑commit changed files
+      - name: Auto-commit changed files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'Auto‑commit new simulation results'
+          commit_message: 'Auto-commit new simulation results'
           file_pattern: 'data/output*'

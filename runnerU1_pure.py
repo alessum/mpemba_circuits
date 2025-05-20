@@ -14,6 +14,7 @@ N = 20
 T = 10000
 parser = argparse.ArgumentParser(description="Run circuit simulations.")
 parser.add_argument("--circuit_to_run", type=float, required=True, help="Circuit realization to run")
+parser.add_argument("--theta_to_run", type=float, required=True, help="Theta (* pi) parameter to run")
 args = parser.parse_args()
 
 circuit_to_run = int(args.circuit_to_run)
@@ -40,7 +41,8 @@ sectors_e = np.array([int(comb(Ne, int(Ne/2+m))) for m in np.arange(-Ne/2, Ne/2+
 masks_dict = fn.load_mask_memory(N, (2 if symmetry!='ZK' else K))
 
 alphas = np.array([1]) # np.r_[np.linspace(0.1, 2, 10)]
-thetas = np.array([.3, .35, .4, .45, .5])*np.pi # theta
+theta = args.theta_to_run * np.pi
+# thetas = np.array([.3, .35, .4, .45, .5])*np.pi # theta
 
 ##############################################################################################
 
@@ -89,33 +91,28 @@ def compute_circuit(theta):
     return circuit.run(masks_dict, sites_to_keep, alphas, rho)
 
 if globals().get('renyi') is None or globals(
-    ).get('renyi').shape != (len(thetas), len(alphas), T + 1):
-    renyi = np.zeros((len(thetas), len(alphas), T + 1), dtype=np.float64)
+    ).get('renyi').shape != (len(alphas), T + 1):
+    renyi = np.zeros(( len(alphas), T + 1), dtype=np.float64)
     
 if globals().get('norms_s') is None or globals(
-    ).get('norms_s').shape != (len(thetas), T + 1, Ns+1):
-    norms_s = np.zeros((len(thetas), T + 1, Ns+1), dtype=np.float64)
+    ).get('norms_s').shape != (T + 1, Ns+1):
+    norms_s = np.zeros((T + 1, Ns+1), dtype=np.float64)
     
 if globals().get('evo') is None or globals(
-    ).get('evo').shape != (len(thetas), T + 1, 2**N):
-    evo = np.zeros((len(thetas), len(snapshots_t), 2**N), dtype=np.complex128)
+    ).get('evo').shape != ( T + 1, 2**N):
+    evo = np.zeros(( len(snapshots_t), 2**N), dtype=np.complex128)
 
-for theta_i in tqdm(product(
-        range(len(thetas))
-    ), total=len(thetas) * circuit_realizations):
-    theta = thetas[theta_i]
-    print(f'theta: {theta/np.pi:.2f} pi')
-    a0, a1, a2 = compute_circuit(theta)
-    renyi[theta_i, :, :], norms_s[theta_i, :, :], evo[theta_i, :, :] = a0, a1, a2
-    np.savez(f'data/{symmetry}_theta{theta/np.pi:.2f}_circuit_real{circuit_to_run}_T{T}.npz',
-            renyi=a0, 
-            norms_s=a1, 
-            evo=a2,
-            theta=theta,
-            circuit_real=circuit_to_run,
-            alphas=alphas,
-            T=T,
-            Ns=Ns,
-            N=N,
-        )
+print(f'theta: {theta/np.pi:.2f} pi, circuit: {circuit_to_run}')
+renyi[:, :], norms_s[:, :], evo[:, :] = compute_circuit(theta)
+np.savez(f'data/{symmetry}_theta{theta/np.pi:.2f}_circuit_real{circuit_to_run}_T{T}.npz',
+        renyi=renyi, 
+        norms_s=norms_s, 
+        evo=evo,
+        theta=theta,
+        circuit_real=circuit_to_run,
+        alphas=alphas,
+        T=T,
+        Ns=Ns,
+        N=N,
+    )
     
