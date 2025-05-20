@@ -80,4 +80,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'Auto-commit new simulation results'
-          file_pattern: 'data/output*'
+          file_pattern: 'data/U1_theta*'
