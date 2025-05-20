@@ -27,7 +27,7 @@ jobs:
         id: fmt
         run: |
           theta=${{ github.event.inputs.theta_to_run }}
-          theta_str=$(python -c "import math; print(f'{float($theta)/math.pi:.2f}')")
+          theta_str=$(python -c "import math; print(f'{float($theta):.2f}')")
           echo "theta_str=$theta_str" >> $GITHUB_OUTPUT
         shell: bash
 
