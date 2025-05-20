@@ -4,80 +4,76 @@ on:
   workflow_dispatch:
     inputs:
       circuit_to_run:
-        description: 'Circuit index (integer)'
+        description: Circuit index (integer)
         required: true
         type: number
       number_of_circuits:
-        description: 'How many circuits to run'
-        required: false
+        description: How many circuits to run
         default: 10
         type: number
       theta_to_run:
-        description: 'Theta to run (float)'
-        required: false
+        description: Theta to run (float)
         default: 0
         type: number
 
 permissions:
-  contents: write   # grant write access to GITHUB_TOKEN
+  contents: write
 
 jobs:
-  prepare-data:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout full repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Upload U1_theta files
-        uses: actions/upload-artifact@v4
-        with:
-          name: theta-data
-          path: data/U1_theta*
-
-
   simulate-and-commit:
-    needs: prepare-data
     runs-on: ubuntu-latest
-
     steps:
+
+      - name: Format theta_over_pi
+        id: fmt
+        run: |
+          python - << 'EOF'
+          import math, os
+          theta = float(os.environ['INPUT_THETA_TO_RUN'])
+          print(f"theta_str={theta/math.pi:.2f}")
+          EOF
+        shell: bash
+
+      # ← export this output so that checkout can see it
+      - name: Export formatted theta
+        run: echo "theta_str=${{ steps.fmt.outputs.theta_str }}" >> $GITHUB_OUTPUT
+
+      - name: Ensure results folders exist
+        run: |
+          mkdir -p results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}      
+
       - name: Checkout code (sparse)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           sparse-checkout-cone-mode: false
           sparse-checkout: |
-            *
-            !data/U1_theta*
+            /*
+            !/results/**
+            /results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+            /results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+            /results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
 
-      - name: Download theta-data artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: theta-data
-          path: data/
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run runnerU1_pure.py for tot circuits
+      - name: Run simulations
         run: |
           start=${{ github.event.inputs.circuit_to_run }}
           count=${{ github.event.inputs.number_of_circuits }}
           end=$(( start + count - 1 ))
-          echo "Running circuits from $start to $end"
           for i in $(seq $start $end); do
-            echo "→ Running circuit $i"
-            python runnerU1_pure.py --circuit_to_run $i --theta_to_run ${{ github.event.inputs.theta_to_run }}
+            python runnerU1_pure.py \
+              --circuit_to_run $i \
+              --theta_to_run ${{ github.event.inputs.theta_to_run }}
           done
 
-      - name: Auto-commit changed files
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Upload results for this circuit
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: 'Auto-commit new simulation results'
-          file_pattern: 'data/U1_theta*'
+          name: U1-results
+          path: |
+            results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+
+            results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}
+
+            results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T10/circuit_real${{ github.event.inputs.circuit_to_run }}

@@ -5,6 +5,7 @@ from circuit_obj import Circuit
 from itertools import product
 from scipy.special import comb
 import argparse
+import os  # Add this import at the top of the file
 
 ##############################################################################################
 
@@ -82,7 +83,6 @@ for circuit_realization in range(circuit_realizations):
     circuit.snapshots_t = snapshots_t
     circuits.append(circuit)
     
-
 ##############################################################################################
 
 def compute_circuit(theta):
@@ -90,29 +90,17 @@ def compute_circuit(theta):
     rho = fn.initial_state(N, sites_to_keep, theta, 'homogenous') # initial_state_test(theta)
     return circuit.run(masks_dict, sites_to_keep, alphas, rho)
 
-if globals().get('renyi') is None or globals(
-    ).get('renyi').shape != (len(alphas), T + 1):
-    renyi = np.zeros(( len(alphas), T + 1), dtype=np.float64)
-    
-if globals().get('norms_s') is None or globals(
-    ).get('norms_s').shape != (T + 1, Ns+1):
-    norms_s = np.zeros((T + 1, Ns+1), dtype=np.float64)
-    
-if globals().get('evo') is None or globals(
-    ).get('evo').shape != ( T + 1, 2**N):
-    evo = np.zeros(( len(snapshots_t), 2**N), dtype=np.complex128)
-
 print(f'theta: {theta/np.pi:.2f} pi, circuit: {circuit_to_run}')
-renyi[:, :], norms_s[:, :], evo[:, :] = compute_circuit(theta)
-np.savez(f'data/{symmetry}_theta{theta/np.pi:.2f}_circuit_real{circuit_to_run}_T{T}.npz',
-        renyi=renyi, 
-        norms_s=norms_s, 
-        evo=evo,
-        theta=theta,
-        circuit_real=circuit_to_run,
-        alphas=alphas,
-        T=T,
-        Ns=Ns,
-        N=N,
-    )
-    
+renyi, norms_s, evo = compute_circuit(theta)
+
+renyi_dir = f'results/renyi/{symmetry}/theta{theta/np.pi:.2f}/T{T}/circuit_real{circuit_to_run}'
+os.makedirs(renyi_dir, exist_ok=True)
+np.savez(f'{renyi_dir}/data.npz', renyi)
+
+norms_dir = f'results/norms_s/{symmetry}/theta{theta/np.pi:.2f}/T{T}/circuit_real{circuit_to_run}'
+os.makedirs(norms_dir, exist_ok=True)
+np.savez(f'{norms_dir}/data.npz', norms_s)
+
+evo_dir = f'results/evo/{symmetry}/theta{theta/np.pi:.2f}/T{T}/circuit_real{circuit_to_run}'
+os.makedirs(evo_dir, exist_ok=True)
+np.savez(f'{evo_dir}/data.npz', evo)

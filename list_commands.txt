@@ -7,3 +7,9 @@ gh run list
 for id in 15116238906 15116237159 15116235241 15116233476 15116231649 15116229777 15116227889; do
    gh run cancel "$id"; 
 done
+
+
+gh workflow run run-runner.yml --ref main \
+  -f circuit_to_run=9 \
+  -f number_of_circuits=1 \
+  -f theta_to_run=0.35

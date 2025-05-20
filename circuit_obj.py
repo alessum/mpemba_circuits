@@ -44,31 +44,27 @@ class Circuit:
     def run(self, masks_dict, sites_to_keep, alphas, state):
         """
         Run the circuit and calculate the QFIs and EA.
-        """        
-        
+        """                
         renyi = np.zeros((len(alphas), self.T + 1))
         # state_evolution = np.zeros((self.T + 1, 2**self.N), dtype=np.complex128)
         norms_s = np.zeros((self.T + 1, self.Ns + 1), dtype=np.float64)
-        snapshots = np.zeros((len(self.snapshots_t), 2**self.N), dtype=np.complex128)
-
-        Ns = len(sites_to_keep)
-        
+        snapshots = np.zeros((len(self.snapshots_t), 2**self.N), dtype=np.complex128)        
         rho_s = fn.ptrace(state, sites_to_keep)
         
         if self.symmetry == 'U1':           
             rho_s_tw = fn.manual_U1_tw(rho_s, self.projectors)
-        elif self.symmetry == 'SU2':
-            rho_s_tw = fn.manual_N4_SU2_tw(rho_s)
-        elif self.symmetry == 'Z2':
-            rho_s_tw = fn.manual_Z2_tw(rho_s)
-        elif self.symmetry == 'ZK':
-            rho_s_tw = fn.manual_ZK_tw(rho_s, self.K)
+        # elif self.symmetry == 'SU2':
+        #     rho_s_tw = fn.manual_N4_SU2_tw(rho_s)
+        # elif self.symmetry == 'Z2':
+        #     rho_s_tw = fn.manual_Z2_tw(rho_s)
+        # elif self.symmetry == 'ZK':
+        #     rho_s_tw = fn.manual_ZK_tw(rho_s, self.K)
             
         rho_s_U1 = self.U_U1_s.conj().T @ rho_s @ self.U_U1_s 
-        rho_modes = fn.asymmetry_modes(rho_s_U1, self.sectors_s)
+        rho_modes_s = fn.asymmetry_modes(rho_s_U1, self.sectors_s)
         
         # state_evolution[0] = state
-        norms_s[0, :] = [fn.compute_norm(rho_om) for rho_om in rho_modes]
+        norms_s[0, :] = [fn.compute_norm(rho_om) for rho_om in rho_modes_s]
         renyi[:, 0] = [fn.renyi_divergence(rho_s, rho_s_tw, alpha) for alpha in alphas]
         
         t_snap = 0
@@ -81,19 +77,18 @@ class Circuit:
             
             if self.symmetry == 'U1':           
                 rho_s_tw = fn.manual_U1_tw(rho_s, self.projectors)
-            elif self.symmetry == 'SU2':
-                rho_s_tw = fn.manual_N4_SU2_tw(rho_s)
-            elif self.symmetry == 'Z2':
-                rho_s_tw = fn.manual_Z2_tw(rho_s)
-            elif self.symmetry == 'ZK':
-                rho_s_tw = fn.manual_ZK_tw(rho_s, self.K)
+            # elif self.symmetry == 'SU2':
+            #     rho_s_tw = fn.manual_N4_SU2_tw(rho_s)
+            # elif self.symmetry == 'Z2':
+            #     rho_s_tw = fn.manual_Z2_tw(rho_s)
+            # elif self.symmetry == 'ZK':
+            #     rho_s_tw = fn.manual_ZK_tw(rho_s, self.K)
                 
             rho_s_U1 = self.U_U1_s.conj().T @ rho_s @ self.U_U1_s 
             rho_modes = fn.asymmetry_modes(rho_s_U1, self.sectors_s)
             
             # state_evolution[t] = state
             norms_s[t, : ] = [fn.compute_norm(rho_om) for rho_om in rho_modes]
-            renyi[:, t] = [fn.renyi_divergence(rho_s, rho_s_tw, alpha) for alpha in alphas]
             
             if t in self.snapshots_t:
                 t_snap += 1
