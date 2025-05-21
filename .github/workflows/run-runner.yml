@@ -58,16 +58,16 @@ jobs:
           sparse-checkout: |
             /*
             !/results/**
-            /results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
-            /results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
-            /results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
+            /results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}
+            /results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}
+            /results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}
 
       # 3) Ensure those folders exist before your script writes into them
       - name: Ensure results folders exist
         run: |
-          mkdir -p results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
-          mkdir -p results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
-          mkdir -p results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}/circuit_real${{ github.event.inputs.circuit_to_run }}
+          mkdir -p results/renyi/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}
+          mkdir -p results/norms_s/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}
+          mkdir -p results/evo/U1/theta${{ steps.fmt.outputs.theta_str }}/T${{ github.event.inputs.time_to_run }}
 
       # 4) Run your simulations
       - name: Run simulations
