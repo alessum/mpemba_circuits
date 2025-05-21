@@ -8,6 +8,8 @@ for id in 15158925526 15158926125; do
    gh run cancel "$id"; 
 done
 
+gh run list --limit 100 --status in_progress --json databaseId --jq '.[].databaseId' | xargs -I {} gh run cancel {}
+
 
 gh workflow run run-runner.yml --ref main -f circuit_to_run=0 -f number_of_circuits=1 -f theta_to_run=0.30 -f time_to_run=10000
 

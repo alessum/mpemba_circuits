@@ -94,17 +94,18 @@ def compute_circuit(theta):
 print(f'theta: {theta/np.pi:.2f} pi, circuit: {circuit_to_run}')
 renyi, norms_s, evo = compute_circuit(theta)
 
-renyi_dir = f'results/renyi/{symmetry}/theta{theta/np.pi:.2f}/T{T}/circuit_real{circuit_to_run}'
+parent_dir = f'results/{symmetry}/T{T}/theta{theta/np.pi:.2f}/circuit_real{circuit_to_run}/'
+renyi_dir = parent_dir + 'renyi'
 print('name folder renyi:', renyi_dir)
 os.makedirs(renyi_dir, exist_ok=True)
 np.savez(f'{renyi_dir}/data.npz', renyi)
 
-norms_dir = f'results/norms_s/{symmetry}/theta{theta/np.pi:.2f}/T{T}/circuit_real{circuit_to_run}'
+norms_dir = parent_dir + 'norms_s'
 print('name folder norms_s:', norms_dir)
 os.makedirs(norms_dir, exist_ok=True)
 np.savez(f'{norms_dir}/data.npz', norms_s)
 
-evo_dir = f'results/evo/{symmetry}/theta{theta/np.pi:.2f}/T{T}/circuit_real{circuit_to_run}'
+evo_dir = parent_dir + 'evo'
 print('name folder evo:', evo_dir)
 os.makedirs(evo_dir, exist_ok=True)
 np.savez(f'{evo_dir}/data.npz', evo)

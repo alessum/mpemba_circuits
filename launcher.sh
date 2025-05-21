@@ -4,11 +4,11 @@
 
 # Define array of theta values
 thetas=(0.30 0.35 0.40 0.45 0.50)
-circuit_to_runs=(0 5 10 15 20)
+circuit_to_runs=(10 11 12 13 14 15 16 17 18 19) #(0 2 4 6 8)
 
 # Fixed parameters
 ref="main"
-number_of_circuits=5
+number_of_circuits=1
 time_to_run=10000
 
 for circuit_to_run in "${circuit_to_runs[@]}"; do
@@ -22,3 +22,4 @@ for circuit_to_run in "${circuit_to_runs[@]}"; do
         -f time_to_run="$time_to_run"
     done
 done
+
