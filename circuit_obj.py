@@ -72,12 +72,6 @@ class Circuit:
         
         if self.symmetry == 'U1':           
             rho_s_tw = fn.manual_U1_tw(rho_s, self.projectors)
-        # elif self.symmetry == 'SU2':
-        #     rho_s_tw = fn.manual_N4_SU2_tw(rho_s)
-        # elif self.symmetry == 'Z2':
-        #     rho_s_tw = fn.manual_Z2_tw(rho_s)
-        # elif self.symmetry == 'ZK':
-        #     rho_s_tw = fn.manual_ZK_tw(rho_s, self.K)
             
         rho_s_U1 = self.U_U1_s.conj().T @ rho_s @ self.U_U1_s 
         rho_modes_s = fn.asymmetry_modes(rho_s_U1, self.sectors_s)
@@ -98,12 +92,6 @@ class Circuit:
             
             if self.symmetry == 'U1':           
                 rho_s_tw = fn.manual_U1_tw(rho_s, self.projectors)
-            # elif self.symmetry == 'SU2':
-            #     rho_s_tw = fn.manual_N4_SU2_tw(rho_s)
-            # elif self.symmetry == 'Z2':
-            #     rho_s_tw = fn.manual_Z2_tw(rho_s)
-            # elif self.symmetry == 'ZK':
-            #     rho_s_tw = fn.manual_ZK_tw(rho_s, self.K)
                 
             rho_s_U1 = self.U_U1_s.conj().T @ rho_s @ self.U_U1_s 
             rho_modes = fn.asymmetry_modes(rho_s_U1, self.sectors_s)
@@ -116,6 +104,9 @@ class Circuit:
                 snapshots[t_snap, :] = state
                 
             start_time = print_time(t, self.T, start_time)
+            
+            renyi[:, t] = [fn.renyi_divergence(rho_s, rho_s_tw, alpha) for alpha in alphas]
+
                 
         return renyi, norms_s, snapshots #
 
