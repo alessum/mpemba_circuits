@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import subprocess
+import numpy as np
 
 def run_workflows(
-    thetas = [0.30, 0.35, 0.40, 0.45, 0.50],
-    circuits = [10, 13, 16, 19, 22, 25, 28, 31, 34, 37],
+    thetas = [0.3, .35, .4, .45, .5],
+    circuits = np.arange(40, 70, 3),
     ref="main",
     number_of_circuits=3,
     time_to_run=10000,
