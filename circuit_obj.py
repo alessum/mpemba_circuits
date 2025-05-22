@@ -3,22 +3,22 @@ import functions as fn
 import time
 
 def print_time(t, T, start_time):
+
     end_time = time.time()
-    if t % 100 == 0:
-        elapsed =  - start_time
-        avg_per_iter = elapsed / t
-        remaining = avg_per_iter * (T - t)
+    elapsed =  - start_time
+    avg_per_iter = elapsed / t
+    remaining = avg_per_iter * (T - t)
 
-        # format ETA as H:MM:SS
-        eta_h = int(remaining) // 3600
-        eta_m = (int(remaining) % 3600) // 60
-        eta_s = int(remaining) % 60
+    # format ETA as H:MM:SS
+    eta_h = int(remaining) // 3600
+    eta_m = (int(remaining) % 3600) // 60
+    eta_s = int(remaining) % 60
 
-        print(
-            f"[{t}/{T}] "
-            f"Elapsed: {elapsed:.1f}s, "
-            f"ETA: {eta_h:d}:{eta_m:02d}:{eta_s:02d}"
-        )
+    print(
+        f"[{t}/{T}] "
+        f"Elapsed: {elapsed:.1f}s, "
+        f"ETA: {eta_h:d}:{eta_m:02d}:{eta_s:02d}"
+    )
     return end_time
 
 
@@ -87,6 +87,7 @@ class Circuit:
         
         for t in range(1,self.T+1):
             
+            
             state = fn.apply_U(state, self.gates, self.order, masks_dict, (None if self.symmetry!='ZK' else self.K))            
             rho_s = fn.ptrace(state.copy(), sites_to_keep)
             
@@ -103,7 +104,8 @@ class Circuit:
                 t_snap += 1
                 snapshots[t_snap, :] = state
                 
-            start_time = print_time(t, self.T, start_time)
+            if t % 100 == 0:
+                start_time = print_time(t, self.T, start_time)
             
             renyi[:, t] = [fn.renyi_divergence(rho_s, rho_s_tw, alpha) for alpha in alphas]
 
